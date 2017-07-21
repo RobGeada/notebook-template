@@ -84,9 +84,7 @@ docker push ${username}/auto-notebook
 
 #deploy oshinko
 cd ..
-oc new-project $PNAME
-oc create configmap default-oshinko-cluster-config --from-file=desired-cluster-config
-./oshinko-deploy.sh -s ${username}/auto-spark-worker -u $OS_USER -p $PNAME
+./oshinko-deploy.sh -s ${username}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER
 
 #expose REST server
 oc expose service oshinko-rest
