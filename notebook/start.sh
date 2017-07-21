@@ -43,6 +43,6 @@ fi
 
 
 export PYTHONPATH=$SPARK_HOME/python:$(echo $SPARK_HOME/python/lib/py4j-*-src.zip)
+echo "c.NotebookApp.notebook_dir = '/scripts'" >> /home/$NB_USER/.jupyter/jupyter_notebook_config.py
 
-cd /scripts
 exec jupyter notebook
