@@ -1,13 +1,10 @@
 #!/bin/bash
 
-#login to OpenShift
-#oc login -u rgeada -p rgeada https://et0.et.eng.bos.redhat.com:8443/
-
 #define new project name
-PNAME=neuralspark-$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-z' | fold -w 2 | head -n 1)
+PNAME=autodeploy-$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-z' | fold -w 2 | head -n 1)
 
 #delete old projects under same name family
-oc delete project $(oc projects -q | grep neuralspark)
+oc delete project $(oc projects -q | grep autodeploy)
 
 #push worker image
 cd spark-worker
