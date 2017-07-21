@@ -68,10 +68,6 @@ then
     exit
 fi
 
-
-#delete old projects under same name family
-oc delete project $(oc projects -q | grep ${PROJECT})
-
 #push worker image
 cd spark-worker
 docker build -t ${username}/auto-spark-worker .
@@ -84,7 +80,11 @@ docker push ${username}/auto-notebook
 
 #deploy oshinko
 cd ..
+echo 
 ./oshinko-deploy.sh -s ${username}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER
+
+#delete old projects under same name family
+oc delete project $(oc projects -q | grep ${PROJECT})
 
 #expose REST server
 oc expose service oshinko-rest
