@@ -74,12 +74,12 @@ oc delete project $(oc projects -q | grep ${PROJECT})
 
 #push worker image
 cd spark-worker
-docker build --no-cache -t ${username}/auto-spark-worker .
+docker build -t ${username}/auto-spark-worker .
 docker push ${username}/auto-spark-worker
 
 #push notebook image
 cd ../notebook
-docker build --no-cache -t ${username}/auto-notebook .
+docker build -t ${username}/auto-notebook .
 docker push ${username}/auto-notebook
 
 #deploy oshinko
