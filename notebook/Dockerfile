@@ -20,12 +20,12 @@ RUN chown -R $NB_USER:root /home/$NB_USER /data \
     && find /home/$NB_USER -type f -exec chmod g+rw {} \; \
     && find /data -type d -exec chmod g+rwx,o+rx {} \; \
     && find /data -type f -exec chmod g+rw {} \; \
-    && chmod -f g+rw /notebooks/notebook.ipynb
+    && chmod -R -f g+rw /scripts
 
 USER $NB_UID
 
 ENV HOME /home/$NB_USER
-ENV JUPYTER_NOTEBOOK_PASSWORD rgeada
+ENV JUPYTER_NOTEBOOK_PASSWORD autodeploy
 
 LABEL io.k8s.description="PySpark Jupyter Notebook." \
       io.k8s.display-name="PySpark Jupyter Notebook." \
