@@ -62,6 +62,13 @@ PNAME=${PROJECT}-$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-z' | fold -w 2 | head
 #get docker username
 username=$(docker info | sed '/Username:/!d;s/.* //')
 
+if [ -z "$username" ]
+then
+    echo "Are you not logged into docker? Please login and try again"
+    exit
+fi
+
+
 #delete old projects under same name family
 oc delete project $(oc projects -q | grep ${PROJECT})
 
