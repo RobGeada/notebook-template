@@ -84,7 +84,7 @@ echo
 ./oshinko-deploy.sh -s ${username}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER
 
 #delete old projects under same name family
-oc delete project $(oc projects -q | grep ${PROJECT})
+oc delete project $(oc projects -q | grep ${PROJECT} | grep -v ${PNAME})
 
 #expose REST server
 oc expose service oshinko-rest
