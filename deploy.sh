@@ -127,6 +127,7 @@ if [ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "
     do
         sleep 5
     done
+fi
 
 echo "Waiting for Jupyter page to ready up..."
 sleep 10
