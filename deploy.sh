@@ -120,13 +120,14 @@ oc get pods | awk '/sparky-m/ && !/Terminating/'
 #check to make sure master is running
 echo "Waiting for master pod to spin up..."
 if [ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]
+then
     MASTER = $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $1}')
     oc delete pod $MASTER
 
     while [[ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]] 
-    do
-        sleep 5
-    done
+        do
+            sleep 5
+        done
 fi
 
 echo "Waiting for Jupyter page to ready up..."
