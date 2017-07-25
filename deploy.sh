@@ -91,12 +91,11 @@ oc expose service oshinko-rest
 REST_URL=$(oc get routes | awk '{print $2}' | grep rest)/clusters
 
 #wait until oshinko is fully deployed
+echo "Waiting for Oshinko pods to spin up..."
 while [[ $(oc get pods | awk '/oshinko/ && !/deploy/' | awk '{print $2}') != "2/2" ]] 
 	do
-		echo "Waiting for Oshinko pods to spin up..."
 		sleep 5
 	done
-oc get pods
 
 #create Spark cluster
 curl -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 10, "masterCount": 1}}' $REST_URL
@@ -109,13 +108,27 @@ oc expose service auto-notebook
 NOTEBOOK_URL=$(oc get routes | awk '{print $2}' | grep auto-notebook)
 
 #wait until notebook is fully deployed
+echo "Waiting for notebook pod to spin up..."
 while [[ $(oc get pods | awk '/notebook/ && !/deploy/' | awk '{print $2}') != "1/1" ]] 
 	do
-		echo "Waiting for notebook pod to spin up..."
+
 		sleep 5
 	done
+
+oc get pods | awk '/sparky-m/ && !/Terminating/'
+
+#check to make sure master is running
+echo "Waiting for master pod to spin up..."
+if [ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]
+    MASTER = $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $1}')
+    oc delete pod $MASTER
+
+    while [[ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]] 
+    do
+        sleep 5
+    done
 
 echo "Waiting for Jupyter page to ready up..."
 sleep 10
 open http://$NOTEBOOK_URL
-
+oc get pods | awk '/sparky-m/ && !/Terminating/'
