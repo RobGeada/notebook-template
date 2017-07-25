@@ -98,7 +98,7 @@ while [[ $(oc get pods | awk '/oshinko/ && !/deploy/' | awk '{print $2}') != "2/
 	done
 
 #create Spark cluster
-curl -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 10, "masterCount": 1}}' $REST_URL
+curl -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 9, "masterCount": 1}}' $REST_URL
 
 #add notebook image
 oc new-app ${username}/auto-notebook
@@ -111,26 +111,12 @@ NOTEBOOK_URL=$(oc get routes | awk '{print $2}' | grep auto-notebook)
 echo "Waiting for notebook pod to spin up..."
 while [[ $(oc get pods | awk '/notebook/ && !/deploy/' | awk '{print $2}') != "1/1" ]] 
 	do
-
 		sleep 5
 	done
 
-oc get pods | awk '/sparky-m/ && !/Terminating/'
-
-#check to make sure master is running
-echo "Waiting for master pod to spin up..."
-if [ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]
-then
-    MASTER = $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $1}')
-    oc delete pod $MASTER
-
-    while [[ $(oc get pods | awk '/sparky-m/ && !/Terminating/' | awk '{print $2}') != "1/1" ]] 
-        do
-            sleep 5
-        done
-fi
-
+#give the Jupyter server some time to get ready
 echo "Waiting for Jupyter page to ready up..."
 sleep 10
+
+#open the notebook for the user
 open http://$NOTEBOOK_URL
-oc get pods | awk '/sparky-m/ && !/Terminating/'
