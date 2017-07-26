@@ -27,7 +27,6 @@ while getopts :c:u:p:h opt; do
         p)
             PROJECT=$OPTARG
             ;;
-
         h)
 			echo
             echo "Usage: deploy.sh [options]"
@@ -181,8 +180,8 @@ while [[ $(oc get pods | awk '/notebook/ && !/deploy/' | awk '{print $2}') != "1
 echo -e "${DONE_MSG}"
 
 #give the Jupyter server some time to get ready
-echo -n "Waiting for Jupyter server readiness..."
-while [[ $(curl -Is http://${NOTEBOOK_URL}) == "HTTP/1.0 503 Service Unavailable" ]] 
+echo -n "Waiting for Jupyter readiness...       "
+while [[ ! -z "$(curl -s http://${NOTEBOOK_URL}/login | grep 'not available')" ]] 
     do
         sleep 3
     done
@@ -190,3 +189,7 @@ echo -e "${DONE_MSG}"
 
 #open the notebook for the user
 open http://$NOTEBOOK_URL
+
+#report success!
+echo "Auto-deployment complete!"
+echo
