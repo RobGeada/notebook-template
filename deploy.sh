@@ -153,6 +153,7 @@ echo $SPARK_SUCC >> ${LOG_DIR}
 if [ "${SPARK_SUCC: -10:7}" != 'Running' ]
 then
     echo -e "${FAIL_MSG}"
+    echo $SPARK_SUCC
     echo  
     echo "Spark cluster creation failed. Check the logs or run ./auto-deploy -c -s to try again."
     echo
@@ -181,7 +182,7 @@ echo -e "${DONE_MSG}"
 
 #give the Jupyter server some time to get ready
 echo -n "Waiting for Jupyter readiness...       "
-while [[ ! -z "$(curl -s http://${NOTEBOOK_URL}/login | grep 'not available')" ]] 
+while [ ! -z "$(curl -s http://${NOTEBOOK_URL}/login | grep 'not available')" ] || [ ! -z "$(curl -sS http://${NOTEBOOK_URL}/login 2>&1 >/dev/null | grep 't resolve host')" ]
     do
         sleep 3
     done
