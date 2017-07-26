@@ -1,6 +1,15 @@
 #!/bin/bash
 
 #========================================================
+#echo setup
+#========================================================
+NC="\x1b[39;49;00m"
+GR='\033[0;32m'
+RE='\033[0;31m'
+DONE_MSG="${GR}[DONE]${NC}" 
+FAIL_MSG="${RE}[FAIL]${NC}"
+
+#========================================================
 #parse arguments
 #========================================================
 DEFAULT_OPENSHIFT_PROJECT=auto-project
@@ -60,63 +69,125 @@ fi
 PNAME=${PROJECT}-$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-z' | fold -w 2 | head -n 1)
 
 #get docker username
-username=$(docker info | sed '/Username:/!d;s/.* //')
+USERNAME=$(docker info | sed '/Username:/!d;s/.* //')
 
-if [ -z "$username" ]
+if [ -z "$USERNAME" ]
 then
     echo "Are you not logged into docker? Please login and try again"
     exit
 fi
 
-#push worker image
+#get deploy dir, format logs
+LOG_DIR=$(pwd)/deploy.log
+echo "Deploy started at $(date)" > ${LOG_DIR}
+
+#build worker image
+echo -n "Building worker image...               " 
 cd spark-worker
-docker build -t ${username}/auto-spark-worker .
-docker push ${username}/auto-spark-worker
+docker build -t ${USERNAME}/auto-spark-worker . >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
+
+#push worker image
+echo -n "Pushing worker image...                "
+docker push ${USERNAME}/auto-spark-worker >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
+
+#build notebook image
+cd ../notebook
+echo -n "Building notebook image...             "
+docker build -t ${USERNAME}/auto-notebook . >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
 
 #push notebook image
-cd ../notebook
-docker build -t ${username}/auto-notebook .
-docker push ${username}/auto-notebook
+echo -n "Pushing notebook image...              "
+docker push ${USERNAME}/auto-notebook >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
+
+#check for OpenShift credentials
+#this is hacky, can it be made better?
+cd ..
+echo -n "Checking OpenShift credentials...      "
+if [ ! -z "$(oc login $OS_CLUSTER -u $OS_USER </dev/null | grep Password)" ]
+then
+    echo
+    echo "Authentication required for ${OS_CLUSTER} (openshift)"
+    echo "Username: ${OS_USER}"
+    read -s -p "Password: " PASSWORD
+    echo
+    oc login $OS_CLUSTER -u $OS_USER -p $PASSWORD >> ${LOG_DIR}
+    PASSWORD="blank"
+    echo
+else
+    echo -e "${DONE_MSG}" 
+fi
 
 #deploy oshinko
-cd ..
-echo 
-./oshinko-deploy.sh -s ${username}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER
+echo -n "Deploying Oshinko...                   "
+./oshinko-deploy.sh -s ${USERNAME}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER  >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
 
 #delete old projects under same name family
-oc delete project $(oc projects -q | grep ${PROJECT} | grep -v ${PNAME})
+echo -n "Cleaning old auto-deploy projects...   "
+oc delete project $(oc projects -q | grep ${PROJECT} | grep -v ${PNAME}) >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
 
 #expose REST server
-oc expose service oshinko-rest
+echo -n "Exposing Oshinko REST server...        "
+oc expose service oshinko-rest >> ${LOG_DIR}
 REST_URL=$(oc get routes | awk '{print $2}' | grep rest)/clusters
+echo -e "${DONE_MSG}"
 
 #wait until oshinko is fully deployed
-echo "Waiting for Oshinko pods to spin up..."
+echo -n "Waiting for Oshinko pods to spin up... "
 while [[ $(oc get pods | awk '/oshinko/ && !/deploy/' | awk '{print $2}') != "2/2" ]] 
 	do
 		sleep 5
 	done
+echo -e "${DONE_MSG}"
 
 #create Spark cluster
-curl -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 9, "masterCount": 1}}' $REST_URL
+echo -n "Creating Spark cluster...              "
+SPARK_SUCC=$(curl -s -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 9, "masterCount": 1}}' $REST_URL)
+echo $SPARK_SUCC >> ${LOG_DIR}
+
+#check to make sure it worked
+echo "${SPARK_SUCC: -9:7}"
+if [ "${SPARK_SUCC: -9:7}" != 'Running' ]
+then
+    echo -e "${FAIL_MSG}"
+    echo  
+    echo "Spark cluster creation failed; run ./auto-deploy -c -s to try again."
+    echo
+    exit
+fi
+echo -e "${DONE_MSG}"
 
 #add notebook image
-oc new-app ${username}/auto-notebook
+echo -n "Creating notebook image...             "
+oc new-app ${USERNAME}/auto-notebook >> ${LOG_DIR}
+echo -e "${DONE_MSG}"
 
 #expose route to notebook
-oc expose service auto-notebook
+echo -n "Exposing notebook image...             "
+oc expose service auto-notebook >> ${LOG_DIR}
 NOTEBOOK_URL=$(oc get routes | awk '{print $2}' | grep auto-notebook)
+echo -e "${DONE_MSG}"
 
 #wait until notebook is fully deployed
-echo "Waiting for notebook pod to spin up..."
+echo -n "Waiting for notebook pod to spin up... "
 while [[ $(oc get pods | awk '/notebook/ && !/deploy/' | awk '{print $2}') != "1/1" ]] 
 	do
 		sleep 5
 	done
+echo -e "${DONE_MSG}"
 
 #give the Jupyter server some time to get ready
-echo "Waiting for Jupyter page to ready up..."
-sleep 10
+echo -n "Waiting for Jupyter server readiness..."
+while [[ $(curl -Is http://${NOTEBOOK_URL}) == "HTTP/1.0 503 Service Unavailable" ]] 
+    do
+        sleep 5
+    done
+echo -e "${DONE_MSG}"
 
 #open the notebook for the user
 open http://$NOTEBOOK_URL
