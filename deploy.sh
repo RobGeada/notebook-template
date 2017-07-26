@@ -141,7 +141,7 @@ echo -e "${DONE_MSG}"
 echo -n "Waiting for Oshinko pods to spin up... "
 while [[ $(oc get pods | awk '/oshinko/ && !/deploy/' | awk '{print $2}') != "2/2" ]] 
 	do
-		sleep 5
+		sleep 3
 	done
 echo -e "${DONE_MSG}"
 
@@ -151,12 +151,11 @@ SPARK_SUCC=$(curl -s -H "Content-Type: application/json" -X POST -d '{"name": "s
 echo $SPARK_SUCC >> ${LOG_DIR}
 
 #check to make sure it worked
-echo "${SPARK_SUCC: -9:7}"
-if [ "${SPARK_SUCC: -9:7}" != 'Running' ]
+if [ "${SPARK_SUCC: -10:7}" != 'Running' ]
 then
     echo -e "${FAIL_MSG}"
     echo  
-    echo "Spark cluster creation failed; run ./auto-deploy -c -s to try again."
+    echo "Spark cluster creation failed. Check the logs or run ./auto-deploy -c -s to try again."
     echo
     exit
 fi
@@ -177,7 +176,7 @@ echo -e "${DONE_MSG}"
 echo -n "Waiting for notebook pod to spin up... "
 while [[ $(oc get pods | awk '/notebook/ && !/deploy/' | awk '{print $2}') != "1/1" ]] 
 	do
-		sleep 5
+		sleep 3
 	done
 echo -e "${DONE_MSG}"
 
@@ -185,7 +184,7 @@ echo -e "${DONE_MSG}"
 echo -n "Waiting for Jupyter server readiness..."
 while [[ $(curl -Is http://${NOTEBOOK_URL}) == "HTTP/1.0 503 Service Unavailable" ]] 
     do
-        sleep 5
+        sleep 3
     done
 echo -e "${DONE_MSG}"
 
