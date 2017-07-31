@@ -146,7 +146,7 @@ echo -e "${DONE_MSG}"
 
 #create Spark cluster
 echo -n "Creating Spark cluster...              "
-SPARK_SUCC=$(curl -s -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 9, "masterCount": 1}}' $REST_URL)
+SPARK_SUCC=$(curl -s -H "Content-Type: application/json" -X POST -d '{"name": "sparky", "config": {"workerCount": 5, "masterCount": 1}}' $REST_URL)
 echo $SPARK_SUCC >> ${LOG_DIR}
 
 #check to make sure it worked
