@@ -81,23 +81,23 @@ echo "Deploy started at $(date)" > ${LOG_DIR}
 #build worker image
 echo -n "Building worker image...               " 
 cd spark-worker
-docker build -t ${USERNAME}/auto-spark-worker . >> ${LOG_DIR}
+docker build -t ${DOCKER_USERNAME}/auto-spark-worker . >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #push worker image
 echo -n "Pushing worker image...                "
-docker push ${USERNAME}/auto-spark-worker >> ${LOG_DIR}
+docker push ${DOCKER_USERNAME}/auto-spark-worker >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #build notebook image
 cd ../notebook
 echo -n "Building notebook image...             "
-docker build -t ${USERNAME}/auto-notebook . >> ${LOG_DIR}
+docker build -t ${DOCKER_USERNAME}/auto-notebook . >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #push notebook image
 echo -n "Pushing notebook image...              "
-docker push ${USERNAME}/auto-notebook >> ${LOG_DIR}
+docker push ${DOCKER_USERNAME}/auto-notebook >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #check for OpenShift credentials
@@ -120,7 +120,7 @@ fi
 
 #deploy oshinko
 echo -n "Deploying Oshinko...                   "
-./oshinko-deploy.sh -s ${USERNAME}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER  >> ${LOG_DIR}
+./oshinko-deploy.sh -s ${DOCKER_USERNAME}/auto-spark-worker -u $OS_USER -p $PNAME -c $OS_CLUSTER  >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #delete old projects under same name family
@@ -161,7 +161,7 @@ echo -e "${DONE_MSG}"
 
 #add notebook image
 echo -n "Creating notebook image...             "
-oc new-app ${USERNAME}/auto-notebook >> ${LOG_DIR}
+oc new-app ${DOCKER_USERNAME}/auto-notebook >> ${LOG_DIR}
 echo -e "${DONE_MSG}"
 
 #expose route to notebook
