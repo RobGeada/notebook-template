@@ -67,12 +67,10 @@ fi
 #define new project name
 PNAME=${PROJECT}-$(cat /dev/urandom | LC_CTYPE=C tr -dc 'a-z' | fold -w 2 | head -n 1)
 
-#get docker username
-USERNAME=$(docker info | sed '/Username:/!d;s/.* //')
-
-if [ -z "$USERNAME" ]
+#bodge for docker for mac
+if [ -z "$DOCKER_USERNAME" ]
 then
-    echo "Are you not logged into docker? Please login and try again"
+    echo "Make sure to set the DOCKER_USERNAME environment variable"
     exit
 fi
 
